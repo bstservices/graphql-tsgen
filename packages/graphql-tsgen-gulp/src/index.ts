@@ -59,14 +59,21 @@ extends Transform
         newLine: ts.NewLineKind.LineFeed,
       });
 
-      file.contents = new Buffer(
-        printer.printList(
-          ts.ListFormat.MultiLine,
-          out,
-          ts.createSourceFile(file.path, "", ts.ScriptTarget.Latest),
-        )
+      const sourceFile = ts.createSourceFile(
+        file.path,
+        "", // content
+        ts.ScriptTarget.Latest
       );
 
+      let body = "// tslint:disable\n";
+      body += `// generated from ${file.basename} by graphql-tsgen-gulp\n`;
+
+      for (const stmt of out) {
+        body += "\n\n";
+        body += printer.printNode(ts.EmitHint.Unspecified, stmt, sourceFile);
+      }
+
+      file.contents = Buffer.from(body, "utf-8");
       return done(undefined, file);
     } else if (file.isStream()) {
       return done(new PluginError(PLUGIN, "streams are not supported"));
