@@ -6,7 +6,6 @@ import * as path from "path";
 import * as fs from "fs";
 import {
   Source,
-  GraphQLSchema,
   buildSchema,
   buildClientSchema,
   parse as parseGraphql,
@@ -14,7 +13,9 @@ import {
 import * as ts from "typescript";
 
 import {
- transformFile,
+  CodegenConfig,
+  CodegenContext,
+  transformFile,
 } from "graphql-tsgen";
 
 const PLUGIN = "graphql-tsgen-gulp";
@@ -22,24 +23,30 @@ const PLUGIN = "graphql-tsgen-gulp";
 export class GraphqlTypescriptCodegen
 extends Transform
 {
-  private readonly schema: GraphQLSchema;
+  private readonly context: CodegenContext;
 
-  constructor(schemaFile: string) {
+  constructor(schemaFile: string, config?: CodegenConfig) {
     super({objectMode: true});
 
+    let schema;
     const ext = path.extname(schemaFile);
     if (ext === ".graphql") {
-      this.schema = buildSchema(new Source(
+      schema = buildSchema(new Source(
         fs.readFileSync(schemaFile, "utf8"),
         schemaFile
       ));
     } else if (ext === ".json") {
-      this.schema = buildClientSchema(
+      schema = buildClientSchema(
         JSON.parse(fs.readFileSync(schemaFile, "utf8"))
       );
     } else {
       throw new PluginError(PLUGIN, "unsupported schema extension " + ext);
     }
+
+    this.context = {
+      ...config,
+      schema,
+    };
   }
 
   _transform(
@@ -53,7 +60,7 @@ extends Transform
         file.path
       ));
 
-      const out = transformFile(doc, this.schema);
+      const out = transformFile(this.context, doc);
 
       const printer = ts.createPrinter({
         newLine: ts.NewLineKind.LineFeed,

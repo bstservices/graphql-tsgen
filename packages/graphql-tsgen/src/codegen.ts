@@ -1,8 +1,8 @@
-
-
 import * as gqs from "graphql/type";
 import * as gql from "graphql/language/ast";
 import * as ts from "typescript";
+
+import {CodegenConfig} from "./config";
 
 
 function addJSDoc<T extends ts.Node>(
@@ -40,6 +40,91 @@ function addJSDoc<T extends ts.Node>(
     );
   } else {
     return node;
+  }
+}
+
+function genGlobalTypes(
+  acc: ts.Statement[],
+  ctx: CodegenContext,
+): void {
+  for (let name in ctx.schema.getTypeMap()) {
+    const schemaType = ctx.schema.getType(name);
+    if (schemaType == null) continue;
+
+    // skip introspection types
+    if (schemaType.name.startsWith("__")) continue;
+
+    if (gqs.isScalarType(schemaType)) {
+      let type: ts.TypeNode;
+      switch (schemaType.name) {
+        case "Int":
+        case "Float":
+          type = ts.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+          break;
+
+        case "ID":
+        case "String":
+          type = ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+          break;
+
+        case "Boolean":
+          type = ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+          break;
+
+        default:
+          type = ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+          break;
+      }
+
+      acc.push(addJSDoc(schemaType, ts.createTypeAliasDeclaration(
+        undefined, // decorators
+        [ts.createModifier(ts.SyntaxKind.ExportKeyword)],
+        schemaType.name,
+        undefined, // type parameters
+        type,
+      )));
+    } else if (gqs.isEnumType(schemaType)) {
+      switch (ctx.enumAs) {
+        case "union":
+        case undefined:
+          acc.push(addJSDoc(schemaType, ts.createTypeAliasDeclaration(
+            undefined, // decorators
+            [ts.createModifier(ts.SyntaxKind.ExportKeyword)],
+            schemaType.name,
+            undefined, // type parameters
+            ts.createUnionTypeNode(
+              schemaType.getValues().map((value) => (
+                addJSDoc(value, ts.createLiteralTypeNode(
+                  ts.createStringLiteral(value.name)
+                  )
+                )))
+            )
+          )));
+          break;
+
+        case "enum":
+        case "constEnum":
+          const modifiers: ts.Modifier[] = [
+            ts.createModifier(ts.SyntaxKind.ExportKeyword)
+          ];
+          if (ctx.enumAs === "constEnum") {
+            modifiers.push(ts.createModifier(ts.SyntaxKind.ConstKeyword));
+          }
+
+          acc.push(addJSDoc(schemaType, ts.createEnumDeclaration(
+            undefined, // decorators
+            modifiers,
+            schemaType.name,
+            schemaType.getValues().map((value) => (
+              addJSDoc(value, ts.createEnumMember(
+                value.name,
+                ts.createStringLiteral(value.name),
+              ))
+            )),
+          )));
+          break;
+      }
+    }
   }
 }
 
@@ -106,42 +191,8 @@ function genSelectionSet(
     }
 
     let type: ts.TypeNode;
-    if (gqs.isScalarType(schemaType)) {
-      switch (schemaType.name) {
-        case "Int":
-        case "Float":
-          type = ts.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
-          break;
-
-        case "ID":
-        case "String":
-          type = ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-          break;
-
-        case "Boolean":
-          type = ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
-          break;
-
-        default:
-          type = ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
-          break;
-      }
-
-      type = ts.addSyntheticTrailingComment(
-        type,
-        ts.SyntaxKind.MultiLineCommentTrivia,
-        schemaType.name,
-      );
-    } else if (gqs.isEnumType(schemaType)) {
-      type = ts.addSyntheticLeadingComment(
-        ts.createUnionTypeNode(
-          schemaType.getValues().map((value) => (
-            ts.createLiteralTypeNode(ts.createStringLiteral(value.name))
-          ))
-        ),
-        ts.SyntaxKind.MultiLineCommentTrivia,
-        schemaType.name,
-      );
+    if (gqs.isScalarType(schemaType) || gqs.isEnumType(schemaType)) {
+      type = ts.createTypeReferenceNode(schemaType.name, []);
     } else if (gqs.isObjectType(schemaType)) {
       const subName = name + "$" + (sel.alias || sel.name).value;
       if (sel.selectionSet == null) {
@@ -215,16 +266,24 @@ function genOperation(
 }
 
 
+export interface CodegenContext
+extends CodegenConfig
+{
+  schema: gqs.GraphQLSchema;
+}
+
 export function transformFile(
+  context: CodegenContext,
   document: gql.DocumentNode,
-  schema: gqs.GraphQLSchema,
 ): ts.NodeArray<ts.Statement> {
   const nodes: ts.Statement[] = [];
+
+  genGlobalTypes(nodes, context);
 
   for (const def of document.definitions) {
     switch (def.kind) {
       case "OperationDefinition":
-        genOperation(nodes, def, schema);
+        genOperation(nodes, def, context.schema);
         break;
     }
   }
