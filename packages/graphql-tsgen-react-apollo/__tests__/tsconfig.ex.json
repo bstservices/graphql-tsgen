@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "moduleResolution": "Node",
+    "jsx": "React",
+    "lib": ["ES2015"],
+    "noEmit": true,
+    "strict": true,
+    "noErrorTruncation": true
+  },
+  "include": ["**/*.ex.*"]
+}

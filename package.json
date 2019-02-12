@@ -1,14 +1,21 @@
 {
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "tsc --build",
     "watch": "tsc --build --watch",
-    "lint": "tslint 'packages/*/src/**/*.ts'"
+    "lint": "tslint -p tsconfig.base.json 'packages/**/*.ts'",
+    "test": "jest"
   },
   "devDependencies": {
     "@bstservices/style": "^0.1.0",
+    "@types/jest": "^23.0",
+    "dtslint": "^0.4.2",
+    "jest": "^23.0",
     "lerna": "^3.10.7",
+    "ts-jest": "^23.10.5",
     "tslint": "^5.12.1",
     "typescript": "^3.2.0"
   }
