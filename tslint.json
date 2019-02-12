@@ -1,0 +1,13 @@
+{
+  "extends": [
+    "@bstservices/style/tslint/style",
+    "@bstservices/style/tslint/pitfalls",
+    "@bstservices/style/tslint/pitfalls-types"
+  ],
+  "linterOptions": {
+    "exclude": [
+      "**/node_modules/**/*",
+      "**/*.d.ts"
+    ]
+  }
+}

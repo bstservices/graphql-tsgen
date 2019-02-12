@@ -15,7 +15,8 @@
     "lib"
   ],
   "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "test": "echo 'Error: run test from root' && exit 1",
+    "lint": "echo 'Error: run lint from root' && exit 1"
   },
   "dependencies": {
     "graphql": "^14.1.1",
@@ -23,7 +24,6 @@
   },
   "devDependencies": {
     "@types/graphql": "^14.0.5",
-    "@types/node": "^8.0",
-    "typescript": "^3.3.3"
+    "@types/node": "^8.0"
   }
 }
