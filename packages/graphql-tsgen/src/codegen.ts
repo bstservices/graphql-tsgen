@@ -234,18 +234,114 @@ function genSelectionSet(
   acc.push(addJSDoc(baseType, genInterface(name, baseFields)));
 }
 
+function genGraphqlAST(
+  node: any,
+  multiline?: boolean,
+): ts.Expression {
+  switch (typeof node) {
+    case "string":
+    case "number":
+    case "boolean":
+      return ts.createLiteral(node);
+
+    case "object":
+      if (node === null) {
+        return ts.createNull();
+      } else if (Array.isArray(node)) {
+        return ts.createArrayLiteral(
+          node.map((item) => genGraphqlAST(item, multiline)),
+          multiline,
+        );
+      } else if (Object.getPrototypeOf(node) !== Object.prototype) {
+        throw new Error(
+          "AST objects must not have a prototype"
+          + (node.constructor ? `, saw ${node.constructor.name}` : "")
+        );
+      } else {
+        const members: ts.ObjectLiteralElementLike[] = [];
+        for (const key of Object.keys(node)) {
+          const value = node[key];
+          if (key === "loc") continue;
+          if (typeof value === "undefined") continue;
+          if (Array.isArray(value) && value.length == 0) continue;
+          members.push(ts.createPropertyAssignment(
+            key,
+            genGraphqlAST(value, multiline),
+          ));
+        }
+        return ts.createObjectLiteral(members, multiline);
+      }
+
+    default:
+      throw new Error(`unsupported type '${typeof node}' in AST`);
+  }
+}
+
+function genOperationDocument(
+  acc: ts.Statement[],
+  name: string,
+  op: gql.OperationDefinitionNode,
+  ctx: CodegenContext,
+): void {
+  let docType: string;
+  if (op.operation === "query") {
+    docType = "QueryDocument";
+  } else if (op.operation === "mutation") {
+    docType = "MutationDocument";
+  } else if (op.operation === "subscription") {
+    docType = "SubscriptionDocument";
+  } else {
+    throw new Error(`unknown operation type '${op.operation}'`);
+  }
+
+  acc.push(ts.createVariableStatement(
+    [ts.createModifier(ts.SyntaxKind.ExportKeyword)],
+    ts.createVariableDeclarationList(
+      [ts.createVariableDeclaration(
+        name,
+        ts.createTypeReferenceNode(
+          docType,
+          [
+            ts.createTypeReferenceNode(name + "$Result", []),
+            ts.createTypeLiteralNode([]),
+          ]
+        ),
+        ts.createObjectLiteral(
+          [
+            ts.createPropertyAssignment(
+              "kind",
+              ts.createStringLiteral("Document")
+            ),
+            ts.createPropertyAssignment(
+              "definitions",
+              ts.createArrayLiteral(
+                [
+                  genGraphqlAST(op, ctx.multilineOperationAST),
+                ],
+                true, // multiline
+              )
+            ),
+          ],
+          true, // multiline
+        ),
+      )],
+      ts.NodeFlags.Const,
+    ),
+  ));
+}
+
 function genOperation(
   acc: ts.Statement[],
   op: gql.OperationDefinitionNode,
-  schema: gqs.GraphQLSchema,
+  ctx: CodegenContext,
 ): void {
   let baseType: gqs.GraphQLObjectType | null | undefined;
   if (op.operation === "query") {
-    baseType = schema.getQueryType();
+    baseType = ctx.schema.getQueryType();
   } else if (op.operation === "mutation") {
-    baseType = schema.getMutationType();
+    baseType = ctx.schema.getMutationType();
   } else if (op.operation === "subscription") {
-    baseType = schema.getSubscriptionType();
+    baseType = ctx.schema.getSubscriptionType();
   }
 
   if (baseType == null) {
@@ -260,9 +356,11 @@ function genOperation(
     acc,
     op.selectionSet,
     op.name.value + "$Result",
-    schema,
+    ctx.schema,
     baseType,
   );
+
+  genOperationDocument(acc, op.name.value, op, ctx);
 }
 
 
@@ -278,12 +376,35 @@ export function transformFile(
 ): ts.NodeArray<ts.Statement> {
   const nodes: ts.Statement[] = [];
 
+  nodes.push(ts.createImportDeclaration(
+    undefined, // decorators
+    undefined, // modifiers
+    ts.createImportClause(
+      undefined, // name
+      ts.createNamedImports([
+        ts.createImportSpecifier(
+          undefined, // alias
+          ts.createIdentifier("QueryDocument"),
+        ),
+        ts.createImportSpecifier(
+          undefined, // alias
+          ts.createIdentifier("MutationDocument"),
+        ),
+        ts.createImportSpecifier(
+          undefined, // alias
+          ts.createIdentifier("SubscriptionDocument"),
+        ),
+      ]),
+    ),
+    ts.createStringLiteral("graphql-tsgen-runtime"),
+  ));
+
   genGlobalTypes(nodes, context);
 
   for (const def of document.definitions) {
     switch (def.kind) {
       case "OperationDefinition":
-        genOperation(nodes, def, context.schema);
+        genOperation(nodes, def, context);
         break;
     }
   }

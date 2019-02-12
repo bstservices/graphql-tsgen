@@ -9,4 +9,11 @@ export interface CodegenConfig
    * but syntactically equivalent to "enum".
    */
   enumAs?: "union" | "enum" | "constEnum";
+
+  /** Whether generated ASTs for GraphQL operations should be printed on
+   * multiple lines (true) or a single line (false, the default). The document
+   * (outermost) node of an operation will always be printed on multiple lines
+   * so that included fragments can be easily seen.
+   */
+  multilineOperationAST?: boolean;
 }
