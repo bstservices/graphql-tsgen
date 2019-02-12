@@ -1,5 +1,5 @@
-import * as gqs from "graphql/type";
 import * as gql from "graphql/language/ast";
+import * as gqs from "graphql/type";
 import * as ts from "typescript";
 
 import {CodegenConfig} from "./config";
@@ -28,7 +28,7 @@ function addJSDoc<T extends ts.Node>(
 
   if (doc) {
     // add gutter and trailing line for multiline comments
-    if (doc.indexOf("\n") != -1) {
+    if (doc.indexOf("\n") !== -1) {
       doc = doc.replace(/\n/g, "\n * ") + "\n";
     }
 
@@ -47,7 +47,7 @@ function genGlobalTypes(
   acc: ts.Statement[],
   ctx: CodegenContext,
 ): void {
-  for (let name in ctx.schema.getTypeMap()) {
+  for (const name of Object.keys(ctx.schema.getTypeMap())) {
     const schemaType = ctx.schema.getType(name);
     if (schemaType == null) continue;
 
@@ -95,17 +95,17 @@ function genGlobalTypes(
             ts.createUnionTypeNode(
               schemaType.getValues().map((value) => (
                 addJSDoc(value, ts.createLiteralTypeNode(
-                  ts.createStringLiteral(value.name)
-                  )
-                )))
-            )
+                  ts.createStringLiteral(value.name),
+                ))
+              )),
+            ),
           )));
           break;
 
         case "enum":
         case "constEnum":
           const modifiers: ts.Modifier[] = [
-            ts.createModifier(ts.SyntaxKind.ExportKeyword)
+            ts.createModifier(ts.SyntaxKind.ExportKeyword),
           ];
           if (ctx.enumAs === "constEnum") {
             modifiers.push(ts.createModifier(ts.SyntaxKind.ConstKeyword));
@@ -227,7 +227,7 @@ function genSelectionSet(
     baseFields.push({
       node: sel,
       schema: schemaField,
-      type: type,
+      type,
     });
   }
 
@@ -255,7 +255,7 @@ function genGraphqlAST(
       } else if (Object.getPrototypeOf(node) !== Object.prototype) {
         throw new Error(
           "AST objects must not have a prototype"
-          + (node.constructor ? `, saw ${node.constructor.name}` : "")
+          + (node.constructor ? `, saw ${node.constructor.name}` : ""),
         );
       } else {
         const members: ts.ObjectLiteralElementLike[] = [];
@@ -263,7 +263,7 @@ function genGraphqlAST(
           const value = node[key];
           if (key === "loc") continue;
           if (typeof value === "undefined") continue;
-          if (Array.isArray(value) && value.length == 0) continue;
+          if (Array.isArray(value) && value.length === 0) continue;
           members.push(ts.createPropertyAssignment(
             key,
             genGraphqlAST(value, multiline),
@@ -304,13 +304,13 @@ function genOperationDocument(
           [
             ts.createTypeReferenceNode(name + "$Result", []),
             ts.createTypeLiteralNode([]),
-          ]
+          ],
         ),
         ts.createObjectLiteral(
           [
             ts.createPropertyAssignment(
               "kind",
-              ts.createStringLiteral("Document")
+              ts.createStringLiteral("Document"),
             ),
             ts.createPropertyAssignment(
               "definitions",
@@ -319,7 +319,7 @@ function genOperationDocument(
                   genGraphqlAST(op, ctx.multilineOperationAST),
                 ],
                 true, // multiline
-              )
+              ),
             ),
           ],
           true, // multiline

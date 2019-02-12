@@ -1,7 +1,7 @@
 import {
   DocumentNode,
-  OperationDefinitionNode,
   FragmentDefinitionNode,
+  OperationDefinitionNode,
 } from "graphql";
 
 

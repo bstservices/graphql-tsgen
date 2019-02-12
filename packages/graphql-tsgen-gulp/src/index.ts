@@ -1,16 +1,16 @@
 
-import * as PluginError from "plugin-error";
-import {Transform} from "stream";
-import * as File from "vinyl";
-import * as path from "path";
 import * as fs from "fs";
 import {
   Source,
-  buildSchema,
   buildClientSchema,
+  buildSchema,
   parse as parseGraphql,
 } from "graphql";
+import * as path from "path";
+import * as PluginError from "plugin-error";
+import {Transform} from "stream";
 import * as ts from "typescript";
+import * as File from "vinyl";
 
 import {
   CodegenConfig,
@@ -33,11 +33,11 @@ extends Transform
     if (ext === ".graphql") {
       schema = buildSchema(new Source(
         fs.readFileSync(schemaFile, "utf8"),
-        schemaFile
+        schemaFile,
       ));
     } else if (ext === ".json") {
       schema = buildClientSchema(
-        JSON.parse(fs.readFileSync(schemaFile, "utf8"))
+        JSON.parse(fs.readFileSync(schemaFile, "utf8")),
       );
     } else {
       throw new PluginError(PLUGIN, "unsupported schema extension " + ext);
@@ -52,12 +52,12 @@ extends Transform
   _transform(
     file: File,
     encoding: string,
-    done: (err?: Error, file?: File) => void
+    done: (err?: Error, file?: File) => void,
   ) {
     if (file.isBuffer()) {
       const doc = parseGraphql(new Source(
         file.contents.toString(),
-        file.path
+        file.path,
       ));
 
       const out = transformFile(this.context, doc);
@@ -69,7 +69,7 @@ extends Transform
       const sourceFile = ts.createSourceFile(
         file.path,
         "", // content
-        ts.ScriptTarget.Latest
+        ts.ScriptTarget.Latest,
       );
 
       let body = "// tslint:disable\n";
