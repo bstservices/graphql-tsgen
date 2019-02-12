@@ -1,5 +1,6 @@
+# yarn/lerna output
 node_modules/
-package-lock.json
-yarn.lock
+/*.log
 
+# build output
 /packages/*/lib/
