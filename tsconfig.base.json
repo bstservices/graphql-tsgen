@@ -9,20 +9,13 @@
       "esnext.asynciterable"
     ],
 
+    "composite": true,
     "declaration": true,
 
-    "alwaysStrict": true,
-    "noImplicitAny": true,
+    "strict": true,
     "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
+    "noUnusedLocals": true,
 
     "noErrorTruncation": true
-  },
-
-  "include": [
-    "./src/**/*"
-  ]
+  }
 }

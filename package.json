@@ -2,6 +2,8 @@
   "name": "root",
   "private": true,
   "scripts": {
+    "build": "tsc --build",
+    "watch": "tsc --build --watch",
     "lint": "tslint 'packages/*/src/**/*.ts'"
   },
   "devDependencies": {

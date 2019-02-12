@@ -4,5 +4,8 @@
     "rootDir": "./src",
     "outDir": "./lib"
   },
-  "include": ["./src/**/*.ts"]
+  "include": ["./src/**/*.ts"],
+  "references": [
+    { "path": "../graphql-tsgen-runtime" }
+  ]
 }

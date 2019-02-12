@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./packages/graphql-tsgen" },
+    { "path": "./packages/graphql-tsgen-gulp" },
+    { "path": "./packages/graphql-tsgen-react-apollo" },
+    { "path": "./packages/graphql-tsgen-runtime" }
+  ]
+}
