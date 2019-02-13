@@ -1,10 +1,10 @@
 {
   "name": "graphql-tsgen-gulp",
   "version": "0.0.0",
-  "description": "> TODO: description",
-  "author": "BST Event Services, LLC",
-  "homepage": "",
+  "description": "Gulp plugin interface to GraphQL-TSGen",
+  "repository": "github:bstservices/graphql-tsgen",
   "license": "Apache-2.0",
+  "author": "BST Event Services, LLC",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "directories": {

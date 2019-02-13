@@ -1,14 +1,15 @@
 {
   "name": "graphql-tsgen-react-apollo",
   "version": "0.0.0",
-  "description": "Apollo helpers for GraphQL-TSGen",
-  "author": "Sam Hanes <sam@maltera.com>",
-  "homepage": "",
+  "description": "react-apollo type helpers for GraphQL-TSGen",
+  "repository": "github:bstservices/graphql-tsgen",
   "license": "Apache-2.0",
+  "author": "BST Event Services, LLC",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "directories": {
-    "lib": "lib"
+    "lib": "lib",
+    "test": "__tests__"
   },
   "files": [
     "lib"

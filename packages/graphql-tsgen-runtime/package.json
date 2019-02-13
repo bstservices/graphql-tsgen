@@ -2,9 +2,9 @@
   "name": "graphql-tsgen-runtime",
   "version": "0.0.0",
   "description": "Runtime API of GraphQL-TSGen",
-  "author": "Sam Hanes <sam@maltera.com>",
-  "homepage": "",
+  "repository": "github:bstservices/graphql-tsgen",
   "license": "Apache-2.0",
+  "author": "BST Event Services, LLC",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "directories": {
